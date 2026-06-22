@@ -323,10 +323,12 @@ def update_db_credential(
 
         merged_credential.credential_values.update(encrypted_params)
 
-    # update model info
+    # Merge the patch into the existing credential_info so a partial update (e.g. only
+    # access) preserves credential_type/description/host. The prior guard checked for a
+    # key literally named "credential_info", which is never present, so it reset the dict
+    # on every patch and dropped the logging tag.
     if encrypted_credential.credential_info:
-        """Update credential info"""
-        if "credential_info" not in merged_credential.credential_info:
+        if merged_credential.credential_info is None:
             merged_credential.credential_info = {}
         merged_credential.credential_info.update(encrypted_credential.credential_info)
 

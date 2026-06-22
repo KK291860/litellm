@@ -148,6 +148,37 @@ async def test_update_existing_logging_credential_forbidden_even_without_logging
     assert exc.value.status_code == 403
 
 
+def test_update_db_credential_preserves_existing_info_on_partial_patch():
+    """A partial credential_info patch (e.g. only access from the Edit-access modal) must
+    merge into the stored info, not replace it -- otherwise the logging tag is dropped and
+    the destination vanishes from the registry after the next reload."""
+    from litellm.proxy.credential_endpoints.endpoints import update_db_credential
+
+    db = CredentialItem(
+        credential_name="dest",
+        credential_values={},
+        credential_info={
+            "credential_type": "logging",
+            "description": "langfuse_otel",
+            "host": "h",
+        },
+    )
+    patch = CredentialItem(
+        credential_name="dest",
+        credential_values={},
+        credential_info={"access": {"global": True}},
+    )
+
+    merged = update_db_credential(db, patch)
+
+    assert merged.credential_info == {
+        "credential_type": "logging",
+        "description": "langfuse_otel",
+        "host": "h",
+        "access": {"global": True},
+    }
+
+
 @pytest.mark.asyncio
 async def test_delete_logging_credential_forbidden_for_non_admin(
     _connected_db, monkeypatch
