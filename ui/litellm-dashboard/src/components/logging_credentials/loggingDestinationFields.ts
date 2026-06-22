@@ -25,7 +25,7 @@ export interface LoggingDestinationBackend {
 export const LOGGING_DESTINATION_BACKENDS: LoggingDestinationBackend[] = [
   {
     id: "langfuse_otel",
-    label: "Langfuse OTEL",
+    label: "Langfuse",
     fields: [
       { name: "langfuse_host", label: "Langfuse Host", type: "text" },
       { name: "langfuse_public_key", label: "Public Key", type: "password" },
@@ -45,7 +45,7 @@ export const LOGGING_DESTINATION_BACKENDS: LoggingDestinationBackend[] = [
   },
   {
     id: "weave_otel",
-    label: "Weave OTEL",
+    label: "Weave",
     fields: [
       { name: "wandb_api_key", label: "W&B API Key", type: "password" },
       { name: "weave_endpoint", label: "Weave OTEL Endpoint", type: "text" },

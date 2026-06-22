@@ -42,8 +42,14 @@ import { LoggingCallbacksTable } from "./Settings/LoggingAndAlerts/LoggingCallba
 import { AlertingObject, CredentialAccess } from "./Settings/LoggingAndAlerts/LoggingCallbacks/types";
 import { useCredentials } from "@/app/(dashboard)/hooks/credentials/useCredentials";
 import EditLoggingCredentialModal from "./logging_credentials/EditLoggingCredentialModal";
-import UnifiedAddLoggingModal from "./logging_credentials/UnifiedAddLoggingModal";
-import { backendLabel, NON_CALLBACK_LOGGING_IDS } from "./logging_credentials/loggingCredentialApi";
+import AccessControlFields from "./logging_credentials/AccessControlFields";
+import {
+  backendLabel,
+  createLoggingCredential,
+  LOGGING_BACKEND_IDS,
+  NON_CALLBACK_LOGGING_IDS,
+} from "./logging_credentials/loggingCredentialApi";
+import { LOGGING_DESTINATION_BACKENDS } from "./logging_credentials/loggingDestinationFields";
 import { parseErrorMessage } from "./shared/errorUtils";
 interface SettingsPageProps {
   accessToken: string | null;
@@ -255,8 +261,12 @@ const Settings: React.FC<SettingsPageProps> = ({ accessToken, userRole, userID, 
   // OTEL trace destinations are credentials tagged credential_type=logging; they share
   // the one Active Logging Callbacks table as rows alongside config callbacks.
   const { data: credentialData, refetch: refetchCredentials } = useCredentials();
-  const [showUnifiedAdd, setShowUnifiedAdd] = useState(false);
   const [editAccessFor, setEditAccessFor] = useState<{ name: string; access?: CredentialAccess } | null>(null);
+  // access for the destination branch of the unified Add modal
+  const [addAccess, setAddAccess] = useState<CredentialAccess>({});
+  const addingDestination = selectedCallback != null && LOGGING_BACKEND_IDS.has(selectedCallback);
+  const addingDestinationFields =
+    LOGGING_DESTINATION_BACKENDS.find((b) => b.id === selectedCallback)?.fields ?? [];
 
   const destinationRows: AlertingObject[] = (credentialData?.credentials ?? [])
     .filter((c) => c.credential_info?.credential_type === "logging")
@@ -411,6 +421,33 @@ const Settings: React.FC<SettingsPageProps> = ({ accessToken, userRole, userID, 
   const addNewCallbackCall = async (formValues: Record<string, any>) => {
     const new_callback = formValues?.callback;
     if (!new_callback) {
+      return;
+    }
+    if (LOGGING_BACKEND_IDS.has(new_callback) && accessToken) {
+      const backendDef = LOGGING_DESTINATION_BACKENDS.find((b) => b.id === new_callback);
+      const fields = backendDef?.fields ?? [];
+      const values = Object.fromEntries(
+        fields.filter((f) => formValues[f.name]).map((f) => [f.name, formValues[f.name]]),
+      );
+      const host = backendDef ? formValues[backendDef.hostField] : undefined;
+      const hasAccess = addAccess.global || addAccess.teams?.length || addAccess.orgs?.length;
+      try {
+        await createLoggingCredential(accessToken, {
+          credentialName: formValues.credential_name,
+          backend: new_callback,
+          values,
+          host,
+          access: hasAccess ? addAccess : undefined,
+        });
+        NotificationsManager.success("Logging destination created");
+        refetchCredentials();
+        setShowAddCallbacksModal(false);
+        setSelectedCallback(null);
+        setAddAccess({});
+        addForm.resetFields();
+      } catch (error) {
+        NotificationsManager.fromBackend(parseErrorMessage(error));
+      }
       return;
     }
     await handleCallbackSubmit(formValues, new_callback, false);
@@ -613,7 +650,7 @@ const Settings: React.FC<SettingsPageProps> = ({ accessToken, userRole, userID, 
               <LoggingCallbacksTable
                 callbacks={[...callbacks.filter((c) => !NON_CALLBACK_LOGGING_IDS.has(c.name)), ...destinationRows]}
                 availableCallbacks={allCallbacks}
-                onAdd={() => setShowUnifiedAdd(true)}
+                onAdd={() => setShowAddCallbacksModal(true)}
                 onEdit={(cb) => {
                   setSelectedEditCallback(cb);
                   setShowEditCallback(true);
@@ -633,19 +670,6 @@ const Settings: React.FC<SettingsPageProps> = ({ accessToken, userRole, userID, 
                   }
                 }}
               />
-              {accessToken && (
-                <UnifiedAddLoggingModal
-                  accessToken={accessToken}
-                  open={showUnifiedAdd}
-                  onClose={() => setShowUnifiedAdd(false)}
-                  onCreated={() => refetchCredentials()}
-                  availableCallbacks={allCallbacks}
-                  onSelectConfigCallback={(id) => {
-                    handleSelectedCallbackChange(id);
-                    setShowAddCallbacksModal(true);
-                  }}
-                />
-              )}
               {accessToken && (
                 <EditLoggingCredentialModal
                   accessToken={accessToken}
@@ -764,6 +788,7 @@ const Settings: React.FC<SettingsPageProps> = ({ accessToken, userRole, userID, 
           setShowAddCallbacksModal(false);
           setSelectedCallback(null);
           setSelectedCallbackParams([]);
+          setAddAccess({});
         }}
         footer={null}
       >
@@ -785,16 +810,42 @@ const Settings: React.FC<SettingsPageProps> = ({ accessToken, userRole, userID, 
           labelAlign="left"
         >
           <CallbackSelector
-            callbackConfigs={callbackConfigs.filter((c: { id: string }) => !NON_CALLBACK_LOGGING_IDS.has(c.id))}
+            callbackConfigs={[
+              ...callbackConfigs.filter((c: { id: string }) => !NON_CALLBACK_LOGGING_IDS.has(c.id)),
+              ...LOGGING_DESTINATION_BACKENDS.map((b) => ({ id: b.id, displayName: b.label, logo: "" })),
+            ]}
             selectedCallback={selectedCallback}
             onCallbackChange={handleSelectedCallbackChange}
           />
 
-          <DynamicParamsFields
-            params={selectedCallbackParams}
-            callbackConfigs={callbackConfigs}
-            selectedCallback={selectedCallback}
-          />
+          {addingDestination ? (
+            <div className="space-y-4 mt-6 p-4 bg-gray-50 rounded-lg border">
+              <FormItem
+                label={<span className="text-sm font-medium text-gray-700">Name</span>}
+                name="credential_name"
+                rules={[{ required: true, message: "Please enter a name" }]}
+              >
+                <Input size="large" placeholder="e.g. langfuse-eu" />
+              </FormItem>
+              {addingDestinationFields.map((f) => (
+                <FormItem
+                  key={f.name}
+                  label={<span className="text-sm font-medium text-gray-700">{f.label}</span>}
+                  name={f.name}
+                  rules={f.optional ? undefined : [{ required: true, message: `Please enter the ${f.label.toLowerCase()}` }]}
+                >
+                  {f.type === "password" ? <Input.Password size="large" /> : <Input size="large" />}
+                </FormItem>
+              ))}
+              <AccessControlFields value={addAccess} onChange={setAddAccess} />
+            </div>
+          ) : (
+            <DynamicParamsFields
+              params={selectedCallbackParams}
+              callbackConfigs={callbackConfigs}
+              selectedCallback={selectedCallback}
+            />
+          )}
 
           <div className="flex justify-end space-x-3 pt-6 mt-6 border-t border-gray-200">
             <Button2
@@ -802,6 +853,7 @@ const Settings: React.FC<SettingsPageProps> = ({ accessToken, userRole, userID, 
                 setShowAddCallbacksModal(false);
                 setSelectedCallback(null);
                 setSelectedCallbackParams([]);
+                setAddAccess({});
                 addForm.resetFields();
               }}
               disabled={isAddingCallback}
@@ -809,7 +861,7 @@ const Settings: React.FC<SettingsPageProps> = ({ accessToken, userRole, userID, 
               Cancel
             </Button2>
             <Button2 htmlType="submit" loading={isAddingCallback} disabled={isAddingCallback}>
-              {isAddingCallback ? "Adding..." : "Add Callback"}
+              {isAddingCallback ? "Adding..." : "Add"}
             </Button2>
           </div>
         </Form>
