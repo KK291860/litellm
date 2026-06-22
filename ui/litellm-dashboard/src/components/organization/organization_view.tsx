@@ -506,6 +506,21 @@ const OrganizationInfoView: React.FC<OrganizationInfoProps> = ({
                       </div>
                       <div>Reset: {orgData.litellm_budget_table.budget_duration || "Never"}</div>
                     </div>
+                    <div>
+                      <Text className="font-medium">Logging Exporters</Text>
+                      {Array.isArray(orgData.metadata?.logging_exporters) &&
+                      orgData.metadata.logging_exporters.length > 0 ? (
+                        <div className="flex flex-wrap gap-2 mt-1">
+                          {orgData.metadata.logging_exporters.map((name: string, index: number) => (
+                            <Badge key={index} color="blue">
+                              {name}
+                            </Badge>
+                          ))}
+                        </div>
+                      ) : (
+                        <div className="text-gray-400 mt-1">None</div>
+                      )}
+                    </div>
 
                     <ObjectPermissionsView
                       objectPermission={orgData.object_permission}

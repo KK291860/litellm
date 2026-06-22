@@ -617,6 +617,22 @@ export default function KeyInfoView({
                 )}
               </Card>
 
+              <Card>
+                <Text className="font-medium mb-3">Logging Exporters</Text>
+                {Array.isArray(currentKeyData.metadata?.logging_exporters) &&
+                currentKeyData.metadata.logging_exporters.length > 0 ? (
+                  <div className="flex flex-wrap gap-2">
+                    {currentKeyData.metadata.logging_exporters.map((name: string, index: number) => (
+                      <Badge key={index} color="blue">
+                        {name}
+                      </Badge>
+                    ))}
+                  </div>
+                ) : (
+                  <Text className="text-gray-500">No logging exporters assigned</Text>
+                )}
+              </Card>
+
               <LoggingSettingsView
                 loggingConfigs={extractLoggingSettings(currentKeyData.metadata)}
                 disabledCallbacks={
