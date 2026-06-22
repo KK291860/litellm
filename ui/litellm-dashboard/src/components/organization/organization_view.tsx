@@ -314,6 +314,21 @@ const OrganizationInfoView: React.FC<OrganizationInfoProps> = ({
                     ))}
                   </div>
                 </Card>
+                <Card>
+                  <Text>Logging Exporters</Text>
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    {Array.isArray(orgData.metadata?.logging_exporters) &&
+                    orgData.metadata.logging_exporters.length > 0 ? (
+                      orgData.metadata.logging_exporters.map((name: string, index: number) => (
+                        <Badge key={index} color="blue">
+                          {name}
+                        </Badge>
+                      ))
+                    ) : (
+                      <Text className="text-gray-400">None</Text>
+                    )}
+                  </div>
+                </Card>
 
                 <ObjectPermissionsView
                   objectPermission={orgData.object_permission}
