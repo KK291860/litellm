@@ -6,6 +6,16 @@ import { LOGGING_DESTINATION_BACKENDS } from "./loggingDestinationFields";
 // not as global config callbacks. The unified Add modal branches on this.
 export const LOGGING_BACKEND_IDS: ReadonlySet<string> = new Set(LOGGING_DESTINATION_BACKENDS.map((b) => b.id));
 
+// Callback ids that must not surface as global callbacks. Per LIT-3850 OTEL is admin-
+// owned and routed per identity via trace destinations, and the legacy Langfuse/OTEL
+// callback paths (`langfuse` v2 SDK, `langfuse_otel` v1, the generic `otel` callback)
+// are deprecated, so these are only ever destinations -- never callback rows or options.
+export const NON_CALLBACK_LOGGING_IDS: ReadonlySet<string> = new Set([
+  ...LOGGING_DESTINATION_BACKENDS.map((b) => b.id),
+  "langfuse",
+  "otel",
+]);
+
 export const backendLabel = (id?: string): string =>
   LOGGING_DESTINATION_BACKENDS.find((b) => b.id === id)?.label ?? id ?? "-";
 

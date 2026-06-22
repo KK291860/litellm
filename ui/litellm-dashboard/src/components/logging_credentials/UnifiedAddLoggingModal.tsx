@@ -4,7 +4,7 @@ import React, { useMemo, useState } from "react";
 import { CredentialAccess } from "../Settings/LoggingAndAlerts/LoggingCallbacks/types";
 import NotificationsManager from "../molecules/notifications_manager";
 import AccessControlFields from "./AccessControlFields";
-import { createLoggingCredential, LOGGING_BACKEND_IDS } from "./loggingCredentialApi";
+import { createLoggingCredential, LOGGING_BACKEND_IDS, NON_CALLBACK_LOGGING_IDS } from "./loggingCredentialApi";
 import { LOGGING_DESTINATION_BACKENDS } from "./loggingDestinationFields";
 
 interface AvailableCallback {
@@ -48,7 +48,7 @@ const UnifiedAddLoggingModal: React.FC<UnifiedAddLoggingModalProps> = ({
       {
         label: "Other callbacks",
         options: Object.entries(availableCallbacks)
-          .filter(([id]) => !LOGGING_BACKEND_IDS.has(id))
+          .filter(([id]) => !NON_CALLBACK_LOGGING_IDS.has(id))
           .map(([id, cb]) => ({ value: id, label: cb.ui_callback_name || id })),
       },
     ],

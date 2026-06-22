@@ -43,7 +43,7 @@ import { AlertingObject, CredentialAccess } from "./Settings/LoggingAndAlerts/Lo
 import { useCredentials } from "@/app/(dashboard)/hooks/credentials/useCredentials";
 import EditLoggingCredentialModal from "./logging_credentials/EditLoggingCredentialModal";
 import UnifiedAddLoggingModal from "./logging_credentials/UnifiedAddLoggingModal";
-import { backendLabel } from "./logging_credentials/loggingCredentialApi";
+import { backendLabel, NON_CALLBACK_LOGGING_IDS } from "./logging_credentials/loggingCredentialApi";
 import { parseErrorMessage } from "./shared/errorUtils";
 interface SettingsPageProps {
   accessToken: string | null;
@@ -611,7 +611,7 @@ const Settings: React.FC<SettingsPageProps> = ({ accessToken, userRole, userID, 
           <TabPanels>
             <TabPanel>
               <LoggingCallbacksTable
-                callbacks={[...callbacks, ...destinationRows]}
+                callbacks={[...callbacks.filter((c) => !NON_CALLBACK_LOGGING_IDS.has(c.name)), ...destinationRows]}
                 availableCallbacks={allCallbacks}
                 onAdd={() => setShowUnifiedAdd(true)}
                 onEdit={(cb) => {
@@ -785,7 +785,7 @@ const Settings: React.FC<SettingsPageProps> = ({ accessToken, userRole, userID, 
           labelAlign="left"
         >
           <CallbackSelector
-            callbackConfigs={callbackConfigs}
+            callbackConfigs={callbackConfigs.filter((c: { id: string }) => !NON_CALLBACK_LOGGING_IDS.has(c.id))}
             selectedCallback={selectedCallback}
             onCallbackChange={handleSelectedCallbackChange}
           />

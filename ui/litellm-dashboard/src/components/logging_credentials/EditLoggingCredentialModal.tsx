@@ -41,6 +41,7 @@ const EditLoggingCredentialModal: React.FC<EditLoggingCredentialModalProps> = ({
       : { global: false, teams: current.teams ?? [], orgs: current.orgs ?? [] };
     try {
       await credentialUpdateCall(accessToken, credentialName, {
+        credential_name: credentialName,
         credential_values: {},
         credential_info: { access: next },
       });
