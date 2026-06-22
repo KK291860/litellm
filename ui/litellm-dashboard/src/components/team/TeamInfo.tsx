@@ -864,23 +864,11 @@ const TeamInfoView: React.FC<TeamInfoProps> = ({
                   )}
                 </Card>
 
-                <Card>
-                  <Text className="font-medium mb-3">Logging Exporters</Text>
-                  {Array.isArray(info.metadata?.logging_exporters) && info.metadata.logging_exporters.length > 0 ? (
-                    <div className="flex flex-wrap gap-2">
-                      {info.metadata.logging_exporters.map((name: string, index: number) => (
-                        <Badge key={index} color="blue">
-                          {name}
-                        </Badge>
-                      ))}
-                    </div>
-                  ) : (
-                    <Text className="text-gray-500">No logging exporters assigned</Text>
-                  )}
-                </Card>
-
                 <LoggingSettingsView
                   loggingConfigs={info.metadata?.logging || []}
+                  loggingExporters={
+                    Array.isArray(info.metadata?.logging_exporters) ? info.metadata.logging_exporters : []
+                  }
                   disabledCallbacks={[]}
                   variant="card"
                 />
@@ -1665,23 +1653,11 @@ const TeamInfoView: React.FC<TeamInfoProps> = ({
                       className="pt-4 border-t border-gray-200"
                     />
 
-                    <div className="pt-4 border-t border-gray-200">
-                      <Text className="font-medium">Logging Exporters</Text>
-                      {Array.isArray(info.metadata?.logging_exporters) && info.metadata.logging_exporters.length > 0 ? (
-                        <div className="flex flex-wrap gap-2 mt-2">
-                          {info.metadata.logging_exporters.map((name: string) => (
-                            <Badge key={name} color="blue">
-                              {name}
-                            </Badge>
-                          ))}
-                        </div>
-                      ) : (
-                        <div className="text-gray-400 mt-1">None</div>
-                      )}
-                    </div>
-
                     <LoggingSettingsView
                       loggingConfigs={info.metadata?.logging || []}
+                      loggingExporters={
+                        Array.isArray(info.metadata?.logging_exporters) ? info.metadata.logging_exporters : []
+                      }
                       disabledCallbacks={[]}
                       variant="inline"
                       className="pt-4 border-t border-gray-200"
