@@ -1433,7 +1433,7 @@ const TeamInfoView: React.FC<TeamInfoProps> = ({
                     <Form.Item
                       label="Logging Exporters"
                       name="logging_exporters"
-                      tooltip="Admin-owned trace destinations this team exports to. Resolved server-side and fanned out (added to the key's and org's). Manage destinations under Settings -> Logging Credentials."
+                      tooltip="Admin-owned trace destinations this team exports to. Resolved server-side and fanned out (added to the key's and org's). Manage destinations under Settings -> Logging Callbacks."
                     >
                       <LoggingExportersSelect />
                     </Form.Item>
@@ -1628,6 +1628,21 @@ const TeamInfoView: React.FC<TeamInfoProps> = ({
                     <div>
                       <Text className="font-medium">Status</Text>
                       <Badge color={info.blocked ? "red" : "green"}>{info.blocked ? "Blocked" : "Active"}</Badge>
+                    </div>
+
+                    <div className="pt-4 border-t border-gray-200">
+                      <Text className="font-medium">Logging Exporters</Text>
+                      {Array.isArray(info.metadata?.logging_exporters) && info.metadata.logging_exporters.length > 0 ? (
+                        <div className="flex flex-wrap gap-2 mt-2">
+                          {info.metadata.logging_exporters.map((name: string) => (
+                            <Badge key={name} color="blue">
+                              {name}
+                            </Badge>
+                          ))}
+                        </div>
+                      ) : (
+                        <div className="text-gray-400 mt-1">None</div>
+                      )}
                     </div>
 
                     <ObjectPermissionsView
